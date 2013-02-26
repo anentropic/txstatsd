@@ -19,7 +19,6 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from distutils.command.install import install
 from glob import glob
 import os
 
@@ -31,8 +30,26 @@ try:
     import setuptools
     from setuptools import find_packages
     from setuptools import setup
+    from setuptools.command import install
+    # TODO: add some kind of post-install script to make sure we refresh
+    # the plugin list when installing, so we know
+    # we have enough write permissions.
 except ImportError:
     from distutils.core import setup
+    from distutils.command.install import install
+
+    class TxPluginInstaller(install):
+        def run(self):
+            install.run(self)
+            # Make sure we refresh the plugin list when installing, so we know
+            # we have enough write permissions.
+            # see http://twistedmatrix.com/documents/current/core/howto/plugin.html
+            # "when installing or removing software which provides Twisted plugins,
+            # the site administrator should be sure the cache is regenerated"
+            from twisted.plugin import IPlugin, getPlugins
+            list(getPlugins(IPlugin))
+
+    extra_setup_args['cmdclass'] = {'install': install}
 
     def find_packages():
         """
@@ -50,21 +67,7 @@ long_description = """
 Twisted-based implementation of a statsd-compatible server and client.
 """
 
-
-class TxPluginInstaller(install):
-    def run(self):
-        install.run(self)
-        # Make sure we refresh the plugin list when installing, so we know
-        # we have enough write permissions.
-        # see http://twistedmatrix.com/documents/current/core/howto/plugin.html
-        # "when installing or removing software which provides Twisted plugins,
-        # the site administrator should be sure the cache is regenerated"
-        from twisted.plugin import IPlugin, getPlugins
-
-        list(getPlugins(IPlugin))
-
 setup(
-    cmdclass = {'install': TxPluginInstaller},
     name="txStatsD",
     version=version.txstatsd,
     description="A network daemon for aggregating statistics",
@@ -86,4 +89,3 @@ setup(
        ],
     **extra_setup_args
     )
-

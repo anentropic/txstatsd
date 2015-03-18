@@ -44,12 +44,12 @@ class CounterMetric(Metric):
     def increment(self, value):
         """Increment the counter by C{value}"""
         self._count += value
-        self._update(self._count)
+        self._update(value)
 
     def decrement(self, value):
         """Decrement the counter by C{value}"""
         self._count -= value
-        self._update(self._count)
+        self._update(-value)
 
     def count(self):
         """Returns the counter's current value."""
